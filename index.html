@@ -2,41 +2,69 @@
 <html>
 <head>
     <title>SMILES Viewer</title>
-    <!-- Use the full path to the library file below -->
-    <script src="https://unpkg.com/smiles-drawer@1.0.10/dist/smiles-drawer.min.js"></script>
+    <!-- The specific, correct link to the SmilesDrawer library -->
+    <script src="https://unpkg.com"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
-        canvas { border: 1px solid #ddd; margin-top: 20px; background: #fff; }
-        input { padding: 8px; width: 300px; }
-        button { padding: 8px 15px; cursor: pointer; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 40px; background-color: #f4f7f6; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
+        canvas { border: 1px solid #eee; margin-top: 20px; background: #fff; border-radius: 4px; }
+        input, select { padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        button:hover { background-color: #218838; }
+        .controls { margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <h1>SMILES Molecule Viewer</h1>
-    <input type="text" id="smiles-input" placeholder="Enter SMILES (e.g. CCO)" value="C1CCCCC1">
-    <button onclick="draw()">Draw Molecule</button>
-    <br>
-    <canvas id="molecule-canvas" width="400" height="400"></canvas>
+
+    <div class="container">
+        <h1>Molecule Viewer</h1>
+        
+        <div class="controls">
+            <!-- Dropdown for common molecules -->
+            <select id="molecule-select" onchange="updateFromSelect()">
+                <option value="">-- Choose an example --</option>
+                <option value="C1CCCCC1">Cyclohexane</option>
+                <option value="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">Caffeine</option>
+                <option value="CC(=O)OC1=CC=CC=C1C(=O)O">Aspirin</option>
+                <option value="C1=CC=C(C=C1)C=O">Benzaldehyde</option>
+                <option value="CC(C)CC1=CC=C(C=C1)C(C)C(=O)O">Ibuprofen</option>
+            </select>
+            
+            <span> or </span>
+
+            <input type="text" id="smiles-input" placeholder="Enter SMILES" value="C1CCCCC1">
+            <button onclick="draw()">Draw</button>
+        </div>
+
+        <canvas id="molecule-canvas" width="500" height="500"></canvas>
+    </div>
 
     <script>
-        // Initialize the drawer with specific options
-        const options = { width: 400, height: 400 };
+        // Initialize the drawer
+        const options = { width: 500, height: 500 };
         const smilesDrawer = new SmilesDrawer.Drawer(options);
+
+        function updateFromSelect() {
+            const select = document.getElementById('molecule-select');
+            const input = document.getElementById('smiles-input');
+            if (select.value !== "") {
+                input.value = select.value;
+                draw();
+            }
+        }
 
         function draw() {
             const input = document.getElementById('smiles-input').value;
 
-            // Use the static parse method from the library
             SmilesDrawer.parse(input, function(tree) {
-                // Draw the parsed molecule tree to the canvas
                 smilesDrawer.draw(tree, 'molecule-canvas', 'light', false);
             }, function(err) {
-                console.error("SMILES Error:", err);
+                console.error(err);
                 alert("Invalid SMILES string");
             });
         }
 
-        // Render the default molecule (cyclohexane) when the page loads
+        // Draw the default molecule on load
         window.onload = draw;
     </script>
 </body>
