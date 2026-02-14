@@ -5,9 +5,10 @@
     <!-- 2D Library -->
     <script src="https://unpkg.com/smiles-drawer@1.0.10/dist/smiles-drawer.min.js"></script>
     <!-- 3D Library (jQuery is a dependency for 3Dmol) -->
-    <script src="https://code.jquery.com"></script>
-    <script src="https://3dmol.csb.pitt.edu"></script>
-    
+    <!-- 1. The Helper (jQuery) - Required for 3D data fetching -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <!-- 2. The 3D Engine (3Dmol.js) - The link you found -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.5.3/3Dmol-min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; background-color: #f0f2f5; }
         .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; min-width: 550px; }
