@@ -89,24 +89,30 @@
     }
 
 function render3D(smiles) {
-    // 1. We use the JSmol API which is very reliable for SMILES -> 3D
-    const url = `https://chemapps.stolaf.edu{encodeURIComponent(smiles)}&output=sdf`;
+    // Corrected the full URL path
+    const baseUrl = "https://chemapps.stolaf.edu";
+    const url = `${baseUrl}?model=${encodeURIComponent(smiles)}&output=sdf`;
 
     let element = $('#gldiv');
+    
+    // Clear previous viewer if it exists
+    element.empty();
     let viewer = $3Dmol.createViewer(element, { backgroundColor: 'white' });
 
+    // Fetch the 3D data
     $.get(url, function(data) {
-        if (!data || data.length < 10) {
-            alert("The 3D service returned empty data. Trying another way...");
+        // Check if we actually got a molecule file back
+        if (data.indexOf("$$$$") === -1) {
+            alert("Could not generate 3D coordinates for this SMILES.");
             return;
         }
-        // 2. Add the 3D model data we received
+        
         viewer.addModel(data, "sdf");
         viewer.setStyle({}, { stick: { radius: 0.2 }, sphere: { scale: 0.3 } });
         viewer.zoomTo();
         viewer.render();
     }).fail(function() {
-        alert("Error connecting to the 3D service.");
+        alert("The 3D service is currently unavailable.");
     });
 }
 
