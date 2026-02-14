@@ -28,11 +28,7 @@
     
     <div class="controls">
         <select id="molecule-select" onchange="updateFromSelect()">
-            <option value="">-- Quick Examples --</option>
-            <option value="C1CCCCC1">Cyclohexane</option>
-            <option value="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">Caffeine</option>
-            <option value="CC(=O)OC1=CC=CC=C1C(=O)O">Aspirin</option>
-            <option value="C1=CC=C(C=C1)C=O">Benzaldehyde</option>
+        <!-- Options will be injected here -->
         </select>
         <input type="text" id="smiles-input" placeholder="Enter SMILES" value="C1CCCCC1">
         <button class="btn-draw" onclick="render()">Update</button>
@@ -104,7 +100,29 @@
     }
 
     // Initial Load
-    window.onload = render;
+    // Replace your "Initial Load" section with this:
+window.onload = function() {
+    loadMolecules();
+    render();
+};
+
+async function loadMolecules() {
+    try {
+        const response = await fetch('molecules.json'); // Path to your file
+        const data = await response.json();
+        const select = document.getElementById('molecule-select');
+
+        data.forEach(mol => {
+            let opt = document.createElement('option');
+            opt.value = mol.smiles;
+            opt.innerHTML = mol.name;
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.error("Error loading molecule list:", err);
+    }
+}
+
 </script>
 
 </body>
