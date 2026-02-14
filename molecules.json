@@ -3,7 +3,7 @@
     {"name": "Caffeine", "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"},
     {"name": "Aspirin", "smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"},
     {"name": "Ethanol", "smiles": "CCO"},
-    {"name": "Menthol", "smiles": "CC(C)C1CCC(C)CC1O"}
+    {"name": "Menthol", "smiles": "CC(C)C1CCC(C)CC1O"},
     {"name": "Methane", "smiles": "C"},
     {"name": "Benzene", "smiles": "C1=CC=CC=C1"},
     {"name": "Glucose", "smiles": "C(C1C(C(C(C(O1)O)O)O)O)O"},
