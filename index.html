@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SMILES Viewer</title>
+    <script src="https://unpkg.com"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        canvas { border: 1px solid #ddd; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>SMILES Molecule Viewer</h1>
+    <input type="text" id="smiles-input" placeholder="Enter SMILES (e.g. CCO)" value="C1CCCCC1">
+    <button onclick="draw()">Draw Molecule</button>
+    <br>
+    <canvas id="molecule-canvas" width="400" height="400"></canvas>
+
+    <script>
+        // Initialize the drawer
+        let options = { width: 400, height: 400 };
+        let smilesDrawer = new SmilesDrawer.Drawer(options);
+
+        function draw() {
+            let input = document.getElementById('smiles-input').value;
+            SmilesDrawer.parse(input, function(tree) {
+                smilesDrawer.draw(tree, 'molecule-canvas', 'light', false);
+            }, function(err) {
+                console.error(err);
+                alert("Invalid SMILES string");
+            });
+        }
+        
+        // Draw the default molecule on load
+        draw();
+    </script>
+</body>
+</html>
