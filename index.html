@@ -16,22 +16,27 @@
     <canvas id="molecule-canvas" width="400" height="400"></canvas>
 
     <script>
-        // Initialize the drawer
-        let options = { width: 400, height: 400 };
-        let smilesDrawer = new SmilesDrawer.Drawer(options);
+// 1. Initialize the drawer once with your preferred options
+const options = { width: 400, height: 400 };
+const smilesDrawer = new SmilesDrawer.Drawer(options);
 
-        function draw() {
-            let input = document.getElementById('smiles-input').value;
-            SmilesDrawer.parse(input, function(tree) {
-                smilesDrawer.draw(tree, 'molecule-canvas', 'light', false);
-            }, function(err) {
-                console.error(err);
-                alert("Invalid SMILES string");
-            });
-        }
-        
-        // Draw the default molecule on load
-        draw();
+function draw() {
+    const input = document.getElementById('smiles-input').value;
+
+    // 2. Use the static parse method
+    // Arguments: (SMILES string, success callback, error callback)
+    SmilesDrawer.parse(input, function(tree) {
+        // 3. Draw the parsed tree to the canvas
+        // Arguments: (parsed tree, canvas ID, theme, skipDepiction)
+        smilesDrawer.draw(tree, 'molecule-canvas', 'light', false);
+    }, function(err) {
+        console.error(err);
+        alert("Invalid SMILES string: " + err);
+    });
+}
+
+// Draw the initial molecule (e.g., Benzene) on page load
+window.onload = draw;
     </script>
 </body>
 </html>
