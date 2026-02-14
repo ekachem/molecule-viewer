@@ -2,10 +2,13 @@
 <html>
 <head>
     <title>SMILES Viewer</title>
-    <script src="https://unpkg.com"></script>
+    <!-- Use the full path to the library file below -->
+    <script src="https://unpkg.com/smiles-drawer@1.0.10/dist/smiles-drawer.min.js"></script>
     <style>
         body { font-family: sans-serif; text-align: center; padding: 20px; }
-        canvas { border: 1px solid #ddd; margin-top: 20px; }
+        canvas { border: 1px solid #ddd; margin-top: 20px; background: #fff; }
+        input { padding: 8px; width: 300px; }
+        button { padding: 8px 15px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -16,27 +19,25 @@
     <canvas id="molecule-canvas" width="400" height="400"></canvas>
 
     <script>
-// 1. Initialize the drawer once with your preferred options
-const options = { width: 400, height: 400 };
-const smilesDrawer = new SmilesDrawer.Drawer(options);
+        // Initialize the drawer with specific options
+        const options = { width: 400, height: 400 };
+        const smilesDrawer = new SmilesDrawer.Drawer(options);
 
-function draw() {
-    const input = document.getElementById('smiles-input').value;
+        function draw() {
+            const input = document.getElementById('smiles-input').value;
 
-    // 2. Use the static parse method
-    // Arguments: (SMILES string, success callback, error callback)
-    SmilesDrawer.parse(input, function(tree) {
-        // 3. Draw the parsed tree to the canvas
-        // Arguments: (parsed tree, canvas ID, theme, skipDepiction)
-        smilesDrawer.draw(tree, 'molecule-canvas', 'light', false);
-    }, function(err) {
-        console.error(err);
-        alert("Invalid SMILES string: " + err);
-    });
-}
+            // Use the static parse method from the library
+            SmilesDrawer.parse(input, function(tree) {
+                // Draw the parsed molecule tree to the canvas
+                smilesDrawer.draw(tree, 'molecule-canvas', 'light', false);
+            }, function(err) {
+                console.error("SMILES Error:", err);
+                alert("Invalid SMILES string");
+            });
+        }
 
-// Draw the initial molecule (e.g., Benzene) on page load
-window.onload = draw;
+        // Render the default molecule (cyclohexane) when the page loads
+        window.onload = draw;
     </script>
 </body>
 </html>
