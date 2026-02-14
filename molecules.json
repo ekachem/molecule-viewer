@@ -4,4 +4,20 @@
     {"name": "Aspirin", "smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"},
     {"name": "Ethanol", "smiles": "CCO"},
     {"name": "Menthol", "smiles": "CC(C)C1CCC(C)CC1O"}
+    {"name": "Methane", "smiles": "C"},
+    {"name": "Benzene", "smiles": "C1=CC=CC=C1"},
+    {"name": "Glucose", "smiles": "C(C1C(C(C(C(O1)O)O)O)O)O"},
+    {"name": "Dopamine", "smiles": "C1=CC(=C(C=C1CCN)O)O"},
+    {"name": "Adrenaline", "smiles": "CNC[C@H](C1=CC(=C(C=C1)O)O)O"},
+    {"name": "Acetone", "smiles": "CC(=O)C"},
+    {"name": "Acetic Acid", "smiles": "CC(=O)O"},
+    {"name": "Paracetamol", "smiles": "CC(=O)NC1=CC=C(C=C1)O"},
+    {"name": "Ibuprofen", "smiles": "CC(C)CC1=CC=C(C=C1)C(C)C(=O)O"},
+    {"name": "Penicillin G", "smiles": "CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C"},
+    {"name": "Capsaicin", "smiles": "CC(C)/C=C/CCCCC(=O)NCC1=CC(=C(C=C1)O)OC"},
+    {"name": "Vitamin C", "smiles": "C(C(C1C(=C(C(=O)O1)O)O)O)O"},
+    {"name": "Urea", "smiles": "C(=O)(N)N"},
+    {"name": "Formaldehyde", "smiles": "C=O"},
+    {"name": "Serotonin", "smiles": "C1=CC2=C(C=C1O)C(=CN2)CCN"},
+    {"name": "Cholesterol", "smiles": "CC(C)CCCC(C)C1CCC2C1(CCC3C2CC=C4C3(CCC(C4)O)C)C"}
 ]
