@@ -47,10 +47,11 @@
 
     <!-- NEW: Info Panel -->
     <div id="info-panel">
-        <div><span class="info-label">IUPAC Name:</span> <span id="iupac-name" class="info-value">Loading...</span></div>
-        <div><span class="info-label">Formula:</span> <span id="mol-formula" class="info-value">-</span></div>
-        <div><span class="info-label">Mol. Weight:</span> <span id="mol-weight" class="info-value">-</span></div>
-    </div>
+    <div><span class="info-label">IUPAC Name:</span> <span id="iupac-name" class="info-value">Searching...</span></div>
+    <div><span class="info-label">Common Names:</span> <span id="common-names" class="info-value">-</span></div>
+    <div><span class="info-label">Formula:</span> <span id="mol-formula" class="info-value">-</span></div>
+    <div><span class="info-label">Mol. Weight:</span> <span id="mol-weight" class="info-value">-</span></div>
+</div>
 </div>
 
 <script>
@@ -87,27 +88,66 @@
     }
 
     // NEW: Fetching logic from PubChem
-    async function fetchPubChemData(smiles) {
-        document.getElementById('iupac-name').innerText = "Searching...";
-        const encodedSmiles = encodeURIComponent(smiles);
-        
-        try {
-            // We request IUPAC Name, Formula, and Molecular Weight in one call
-            const url = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`;
-            const response = await fetch(url);
-            const data = await response.json();
+async function fetchPubChemData(smiles) {
+    const encodedSmiles = encodeURIComponent(smiles);
+    
+    // Reset displays
+    document.getElementById('iupac-name').innerText = "Searching...";
+    document.getElementById('common-names').innerText = "Searching...";
 
-            if (data.PropertyTable && data.PropertyTable.Properties) {
-                const props = data.PropertyTable.Properties[0];
-                document.getElementById('iupac-name').innerText = props.IUPACName || "N/A";
-                document.getElementById('mol-formula').innerText = props.MolecularFormula || "N/A";
-                document.getElementById('mol-weight').innerText = props.MolecularWeight || "N/A";
-            }
-        } catch (err) {
-            document.getElementById('iupac-name').innerText = "Not found in PubChem";
-            console.error("PubChem Error:", err);
+    // 1. Fetch Properties (IUPAC, Formula, Weight)
+    const propUrl = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`;
+    
+    // 2. Fetch Synonyms (Common/Commercial names)
+    const synUrl = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/synonyms/JSON`;
+
+    try {
+        // Run both requests in parallel for speed
+        const [propRes, synRes] = await Promise.all([
+            fetch(propUrl).then(res => res.json()),
+            fetch(synUrl).then(res => res.json())
+        ]);
+
+        // Handle Properties
+        if (propRes.PropertyTable && propRes.PropertyTable.Properties) {
+            const props = propRes.PropertyTable.Properties[0];
+            document.getElementById('iupac-name').innerText = props.IUPACName || "N/A";
+            document.getElementById('mol-formula').innerText = props.MolecularFormula || "N/A";
+            document.getElementById('mol-weight').innerText = props.MolecularWeight || "N/A";
         }
+
+        // Handle Synonyms (Common Names)
+        if (synRes.InformationList && synRes.InformationList.Information) {
+            const synonyms = synRes.InformationList.Information[0].Synonym;
+            if (synonyms && synonyms.length > 0) {
+                // We take the first 3 common synonyms and join them
+                const topSynonyms = synonyms.slice(0, 3).join(", ");
+                document.getElementById('common-names').innerText = topSynonyms;
+            } else {
+                document.getElementById('common-names').innerText = "None found";
+            }
+        }
+
+    } catch (err) {
+        document.getElementById('iupac-name').innerText = "Not found";
+        document.getElementById('common-names').innerText = "Not found";
+        console.error("PubChem Fetch Error:", err);
     }
+}
+
+// Update the render function to call the fetcher
+function render() {
+    const smiles = document.getElementById('smiles-input').value;
+    if (!smiles) return;
+
+    fetchPubChemData(smiles);
+    
+    if (is3D) {
+        render3D(smiles);
+    } else {
+        render2D(smiles);
+    }
+}
 
     function render2D(smiles) {
         SmilesDrawer.parse(smiles, function(tree) {
