@@ -52,7 +52,8 @@
 <script>
     let is3D = false;
     const options = { width: 500, height: 500 };
-    const smilesDrawer = new SmilesDrawer.Drawer(options);
+    // Initialize the drawer
+    let smilesDrawer = new SmilesDrawer.Drawer(options);
 
     function updateFromSelect() {
         const select = document.getElementById('molecule-select');
@@ -87,30 +88,35 @@
         const encodedSmiles = encodeURIComponent(smiles);
         document.getElementById('iupac-name').innerText = "Searching...";
         document.getElementById('common-name').innerText = "Searching...";
+        document.getElementById('mol-formula').innerText = "-";
+        document.getElementById('mol-weight').innerText = "-";
 
-        // Corrected URL paths
-        const propUrl = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`;
-        const synUrl = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/synonyms/JSON`;
+        // FIX: Added /smiles/ before the variable and corrected template literal syntax
+        const propUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/${encodedSmiles}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`;
+        const synUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/${encodedSmiles}/synonyms/JSON`;
 
         try {
             const [propRes, synRes] = await Promise.all([
-                fetch(propUrl).then(res => res.json()),
-                fetch(synUrl).then(res => res.json())
+                fetch(propUrl).then(res => res.ok ? res.json() : null),
+                fetch(synUrl).then(res => res.ok ? res.json() : null)
             ]);
 
-            if (propRes.PropertyTable && propRes.PropertyTable.Properties) {
+            if (propRes && propRes.PropertyTable && propRes.PropertyTable.Properties) {
                 const props = propRes.PropertyTable.Properties[0];
                 document.getElementById('iupac-name').innerText = props.IUPACName || "N/A";
                 document.getElementById('mol-formula').innerText = props.MolecularFormula || "N/A";
                 document.getElementById('mol-weight').innerText = props.MolecularWeight || "N/A";
             }
 
-            if (synRes.InformationList && synRes.InformationList.Information) {
+            if (synRes && synRes.InformationList && synRes.InformationList.Information) {
                 const syns = synRes.InformationList.Information[0].Synonym;
-                // Grab first synonym (usually the most common/commercial name)
+                // Grab first synonym (usually the most common name)
                 document.getElementById('common-name').innerText = syns ? syns[0] : "N/A";
+            } else {
+                document.getElementById('common-name').innerText = "N/A";
             }
         } catch (err) {
+            console.error("PubChem Error:", err);
             document.getElementById('iupac-name').innerText = "Not found";
             document.getElementById('common-name').innerText = "Not found";
         }
@@ -126,19 +132,20 @@
 
     function render3D(smiles) {
         const encodedSmiles = encodeURIComponent(smiles);
-        // Corrected Cactus URL path
-        const url = `https://cactus.nci.nih.gov{encodedSmiles}/file?format=sdf&get3d=true`;
+        // FIX: Corrected Cactus URL syntax
+        const url = `https://cactus.nci.nih.gov/chemical/structure/${encodedSmiles}/file?format=sdf&get3d=true`;
         
         let element = $('#gldiv');
+        element.empty(); // Clear previous viewer
         let viewer = $3Dmol.createViewer(element, { backgroundColor: 'white' });
 
         $.get(url, function(data) {
             viewer.addModel(data, "sdf");
-            viewer.setStyle({}, { stick: { radius: 0.2 }, sphere: { scale: 0.3 } });
+            viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.25 } });
             viewer.zoomTo();
             viewer.render();
         }).fail(function() {
-            alert("3D structure not found for this SMILES.");
+            console.error("3D structure not found at Cactus.");
         });
     }
 
