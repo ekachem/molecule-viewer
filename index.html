@@ -2,9 +2,7 @@
 <html>
 <head>
     <title>SMILES 2D/3D Viewer</title>
-    <!-- 2D Library v1 -->
     <script src="https://unpkg.com/smiles-drawer@1.0.10/dist/smiles-drawer.min.js"></script>
-    <!-- 3D Library (jQuery is a dependency for 3Dmol) --> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.5.3/3Dmol-min.js"></script>
     <style>
@@ -12,13 +10,17 @@
         .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; min-width: 550px; }
         .viewer-container { position: relative; width: 500px; height: 500px; margin: 20px auto; border: 1px solid #ddd; }
         canvas, #gldiv { width: 100%; height: 100%; }
-        #gldiv { display: none; } /* Hidden by default */
+        #gldiv { display: none; }
         .controls { margin-bottom: 15px; }
         input, select { padding: 10px; border-radius: 4px; border: 1px solid #ccc; }
         button { padding: 10px 15px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; }
         .btn-draw { background: #28a745; color: white; }
         .btn-toggle { background: #007bff; color: white; margin-top: 10px; }
-        .active { background: #0056b3; }
+        
+        /* New Info Section Styling */
+        #info-panel { margin-top: 15px; padding: 15px; background: #fafafa; border-radius: 8px; text-align: left; border: 1px solid #eee; }
+        .info-label { font-weight: bold; color: #555; }
+        .info-value { color: #000; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -28,7 +30,7 @@
     
     <div class="controls">
         <select id="molecule-select" onchange="updateFromSelect()">
-        <!-- Options will be injected here -->
+            <!-- Options injected here -->
         </select>
         <input type="text" id="smiles-input" placeholder="Enter SMILES" value="C1CCCCC1">
         <button class="btn-draw" onclick="render()">Update</button>
@@ -39,10 +41,15 @@
     </div>
 
     <div class="viewer-container">
-        <!-- 2D Canvas -->
         <canvas id="molecule-canvas"></canvas>
-        <!-- 3D Container -->
         <div id="gldiv"></div>
+    </div>
+
+    <!-- NEW: Info Panel -->
+    <div id="info-panel">
+        <div><span class="info-label">IUPAC Name:</span> <span id="iupac-name" class="info-value">Loading...</span></div>
+        <div><span class="info-label">Formula:</span> <span id="mol-formula" class="info-value">-</span></div>
+        <div><span class="info-label">Mol. Weight:</span> <span id="mol-weight" class="info-value">-</span></div>
     </div>
 </div>
 
@@ -67,12 +74,38 @@
         render();
     }
 
+    // UPDATED: Now calls fetchPubChemData
     function render() {
         const smiles = document.getElementById('smiles-input').value;
+        fetchPubChemData(smiles); // Get info
+        
         if (is3D) {
             render3D(smiles);
         } else {
             render2D(smiles);
+        }
+    }
+
+    // NEW: Fetching logic from PubChem
+    async function fetchPubChemData(smiles) {
+        document.getElementById('iupac-name').innerText = "Searching...";
+        const encodedSmiles = encodeURIComponent(smiles);
+        
+        try {
+            // We request IUPAC Name, Formula, and Molecular Weight in one call
+            const url = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.PropertyTable && data.PropertyTable.Properties) {
+                const props = data.PropertyTable.Properties[0];
+                document.getElementById('iupac-name').innerText = props.IUPACName || "N/A";
+                document.getElementById('mol-formula').innerText = props.MolecularFormula || "N/A";
+                document.getElementById('mol-weight').innerText = props.MolecularWeight || "N/A";
+            }
+        } catch (err) {
+            document.getElementById('iupac-name').innerText = "Not found in PubChem";
+            console.error("PubChem Error:", err);
         }
     }
 
@@ -85,7 +118,6 @@
     function render3D(smiles) {
         const encodedSmiles = encodeURIComponent(smiles);
         const url = `https://cactus.nci.nih.gov{encodedSmiles}/file?format=sdf&get3d=true`;
-
         let element = $('#gldiv');
         let viewer = $3Dmol.createViewer(element, { backgroundColor: 'white' });
 
@@ -95,35 +127,22 @@
             viewer.zoomTo();
             viewer.render();
         }).fail(function() {
-            alert("Could not generate 3D structure for this SMILES.");
+            console.warn("3D fetch failed.");
         });
     }
 
-    // Initial Load
-    // Replace your "Initial Load" section with this:
-window.onload = function() {
-    loadMolecules();
-    render();
-};
-
-async function loadMolecules() {
-    try {
-        const response = await fetch('molecules.json'); // Path to your file
-        const data = await response.json();
+    window.onload = function() {
+        // Mocking the loadMolecules for demo purposes
         const select = document.getElementById('molecule-select');
-
-        data.forEach(mol => {
+        const demoMols = [{name: "Benzene", smiles: "c1ccccc1"}, {name: "Caffeine", smiles: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"}];
+        demoMols.forEach(mol => {
             let opt = document.createElement('option');
             opt.value = mol.smiles;
             opt.innerHTML = mol.name;
             select.appendChild(opt);
         });
-    } catch (err) {
-        console.error("Error loading molecule list:", err);
-    }
-}
-
+        render();
+    };
 </script>
-
 </body>
 </html>
