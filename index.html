@@ -17,10 +17,10 @@
         .btn-draw { background: #28a745; color: white; }
         .btn-toggle { background: #007bff; color: white; margin-top: 10px; }
         
-        /* New Info Section Styling */
-        #info-panel { margin-top: 15px; padding: 15px; background: #fafafa; border-radius: 8px; text-align: left; border: 1px solid #eee; }
-        .info-label { font-weight: bold; color: #555; }
-        .info-value { color: #000; margin-bottom: 5px; }
+        #info-panel { margin-top: 15px; padding: 15px; background: #fafafa; border-radius: 8px; text-align: left; border: 1px solid #eee; max-width: 500px; margin-left: auto; margin-right: auto; }
+        .info-label { font-weight: bold; color: #555; display: inline-block; width: 120px; }
+        .info-value { color: #000; }
+        .info-row { margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -29,29 +29,24 @@
     <h1>Molecule Viewer</h1>
     
     <div class="controls">
-        <select id="molecule-select" onchange="updateFromSelect()">
-            <!-- Options injected here -->
-        </select>
-        <input type="text" id="smiles-input" placeholder="Enter SMILES" value="C1CCCCC1">
+        <select id="molecule-select" onchange="updateFromSelect()"></select>
+        <input type="text" id="smiles-input" placeholder="Enter SMILES" value="CC(=O)OC1=CC=CC=C1C(=O)O">
         <button class="btn-draw" onclick="render()">Update</button>
     </div>
 
-    <div>
-        <button id="view-mode-btn" class="btn-toggle" onclick="toggleMode()">Switch to 3D View</button>
-    </div>
+    <button id="view-mode-btn" class="btn-toggle" onclick="toggleMode()">Switch to 3D View</button>
 
     <div class="viewer-container">
         <canvas id="molecule-canvas"></canvas>
         <div id="gldiv"></div>
     </div>
 
-    <!-- NEW: Info Panel -->
     <div id="info-panel">
-    <div><span class="info-label">IUPAC Name:</span> <span id="iupac-name" class="info-value">Searching...</span></div>
-    <div><span class="info-label">Common Names:</span> <span id="common-names" class="info-value">-</span></div>
-    <div><span class="info-label">Formula:</span> <span id="mol-formula" class="info-value">-</span></div>
-    <div><span class="info-label">Mol. Weight:</span> <span id="mol-weight" class="info-value">-</span></div>
-</div>
+        <div class="info-row"><span class="info-label">Common Name:</span> <span id="common-name" class="info-value">-</span></div>
+        <div class="info-row"><span class="info-label">IUPAC Name:</span> <span id="iupac-name" class="info-value">Loading...</span></div>
+        <div class="info-row"><span class="info-label">Formula:</span> <span id="mol-formula" class="info-value">-</span></div>
+        <div class="info-row"><span class="info-label">Mol. Weight:</span> <span id="mol-weight" class="info-value">-</span></div>
+    </div>
 </div>
 
 <script>
@@ -75,10 +70,11 @@
         render();
     }
 
-    // UPDATED: Now calls fetchPubChemData
     function render() {
         const smiles = document.getElementById('smiles-input').value;
-        fetchPubChemData(smiles); // Get info
+        if(!smiles) return;
+        
+        fetchPubChemData(smiles);
         
         if (is3D) {
             render3D(smiles);
@@ -87,77 +83,52 @@
         }
     }
 
-    // NEW: Fetching logic from PubChem
-async function fetchPubChemData(smiles) {
-    const encodedSmiles = encodeURIComponent(smiles);
-    
-    // Reset displays
-    document.getElementById('iupac-name').innerText = "Searching...";
-    document.getElementById('common-names').innerText = "Searching...";
+    async function fetchPubChemData(smiles) {
+        const encodedSmiles = encodeURIComponent(smiles);
+        document.getElementById('iupac-name').innerText = "Searching...";
+        document.getElementById('common-name').innerText = "Searching...";
 
-    // 1. Fetch Properties (IUPAC, Formula, Weight)
-    const propUrl = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`;
-    
-    // 2. Fetch Synonyms (Common/Commercial names)
-    const synUrl = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/synonyms/JSON`;
+        // Corrected URL paths
+        const propUrl = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/property/IUPACName,MolecularFormula,MolecularWeight/JSON`;
+        const synUrl = `https://pubchem.ncbi.nlm.nih.gov{encodedSmiles}/synonyms/JSON`;
 
-    try {
-        // Run both requests in parallel for speed
-        const [propRes, synRes] = await Promise.all([
-            fetch(propUrl).then(res => res.json()),
-            fetch(synUrl).then(res => res.json())
-        ]);
+        try {
+            const [propRes, synRes] = await Promise.all([
+                fetch(propUrl).then(res => res.json()),
+                fetch(synUrl).then(res => res.json())
+            ]);
 
-        // Handle Properties
-        if (propRes.PropertyTable && propRes.PropertyTable.Properties) {
-            const props = propRes.PropertyTable.Properties[0];
-            document.getElementById('iupac-name').innerText = props.IUPACName || "N/A";
-            document.getElementById('mol-formula').innerText = props.MolecularFormula || "N/A";
-            document.getElementById('mol-weight').innerText = props.MolecularWeight || "N/A";
-        }
-
-        // Handle Synonyms (Common Names)
-        if (synRes.InformationList && synRes.InformationList.Information) {
-            const synonyms = synRes.InformationList.Information[0].Synonym;
-            if (synonyms && synonyms.length > 0) {
-                // We take the first 3 common synonyms and join them
-                const topSynonyms = synonyms.slice(0, 3).join(", ");
-                document.getElementById('common-names').innerText = topSynonyms;
-            } else {
-                document.getElementById('common-names').innerText = "None found";
+            if (propRes.PropertyTable && propRes.PropertyTable.Properties) {
+                const props = propRes.PropertyTable.Properties[0];
+                document.getElementById('iupac-name').innerText = props.IUPACName || "N/A";
+                document.getElementById('mol-formula').innerText = props.MolecularFormula || "N/A";
+                document.getElementById('mol-weight').innerText = props.MolecularWeight || "N/A";
             }
+
+            if (synRes.InformationList && synRes.InformationList.Information) {
+                const syns = synRes.InformationList.Information[0].Synonym;
+                // Grab first synonym (usually the most common/commercial name)
+                document.getElementById('common-name').innerText = syns ? syns[0] : "N/A";
+            }
+        } catch (err) {
+            document.getElementById('iupac-name').innerText = "Not found";
+            document.getElementById('common-name').innerText = "Not found";
         }
-
-    } catch (err) {
-        document.getElementById('iupac-name').innerText = "Not found";
-        document.getElementById('common-names').innerText = "Not found";
-        console.error("PubChem Fetch Error:", err);
     }
-}
-
-// Update the render function to call the fetcher
-function render() {
-    const smiles = document.getElementById('smiles-input').value;
-    if (!smiles) return;
-
-    fetchPubChemData(smiles);
-    
-    if (is3D) {
-        render3D(smiles);
-    } else {
-        render2D(smiles);
-    }
-}
 
     function render2D(smiles) {
         SmilesDrawer.parse(smiles, function(tree) {
             smilesDrawer.draw(tree, 'molecule-canvas', 'light', false);
+        }, function(err) {
+            console.error("SMILES Parse Error", err);
         });
     }
 
     function render3D(smiles) {
         const encodedSmiles = encodeURIComponent(smiles);
+        // Corrected Cactus URL path
         const url = `https://cactus.nci.nih.gov{encodedSmiles}/file?format=sdf&get3d=true`;
+        
         let element = $('#gldiv');
         let viewer = $3Dmol.createViewer(element, { backgroundColor: 'white' });
 
@@ -167,14 +138,17 @@ function render() {
             viewer.zoomTo();
             viewer.render();
         }).fail(function() {
-            console.warn("3D fetch failed.");
+            alert("3D structure not found for this SMILES.");
         });
     }
 
     window.onload = function() {
-        // Mocking the loadMolecules for demo purposes
         const select = document.getElementById('molecule-select');
-        const demoMols = [{name: "Benzene", smiles: "c1ccccc1"}, {name: "Caffeine", smiles: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"}];
+        const demoMols = [
+            {name: "Aspirin", smiles: "CC(=O)OC1=CC=CC=C1C(=O)O"},
+            {name: "Caffeine", smiles: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"},
+            {name: "Benzene", smiles: "C1=CC=CC=C1"}
+        ];
         demoMols.forEach(mol => {
             let opt = document.createElement('option');
             opt.value = mol.smiles;
@@ -186,3 +160,4 @@ function render() {
 </script>
 </body>
 </html>
+
